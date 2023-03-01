@@ -14,7 +14,14 @@ export class Searchbar extends Component {
     evt.preventDefault();
     const value = this.state.searcValue;
     this.props.onSearch(value);
+    this.reset();
   };
+
+  reset() {
+    this.setState({
+      searcValue: '',
+    });
+  }
 
   render() {
     const { searcValue } = this.state;
