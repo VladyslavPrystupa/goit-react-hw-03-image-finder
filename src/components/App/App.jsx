@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Component } from 'react';
 import { fetchApi } from '../../services/api';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
@@ -11,9 +10,6 @@ import { Container } from './App.styled';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-const BASE_URL = 'https://pixabay.com/api/';
-const KEY = '32943531-cb871ea456f4d19bb7942720c';
 
 export class App extends Component {
   state = {
@@ -30,35 +26,20 @@ export class App extends Component {
     const { searchQuery, page } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
-      fetchApi();
-      console.log(
-        'fetchApi(): ',
-        fetchApi().then(resp => resp)
-      );
       try {
         this.setState({ isLoading: true, images: [] });
 
-        const response = await axios.get(BASE_URL, {
-          params: {
-            key: KEY,
-            q: `${searchQuery}`,
-            image_type: 'photo',
-            orientation: 'horizontal',
-            per_page: 12,
+        fetchApi(searchQuery).then(response => {
+          if (response.length === 0) {
+            return toast.error('No such value, please enter something valid', {
+              autoClose: 2000,
+            });
+          }
+
+          this.setState({
+            images: response,
             page: 1,
-          },
-        });
-
-        if (response.data.hits.length === 0) {
-          return toast.error('No such value, please enter something valid', {
-            autoClose: 2000,
           });
-        }
-
-        this.setState({
-          images: response.data.hits,
-          page: 1,
-          isLoading: false,
         });
       } catch (error) {
         this.setState({ error });
@@ -71,21 +52,12 @@ export class App extends Component {
       try {
         this.setState({ isLoading: true });
 
-        const response = await axios.get(BASE_URL, {
-          params: {
-            key: KEY,
-            q: `${searchQuery}`,
-            image_type: 'photo',
-            orientation: 'horizontal',
-            safesearch: true,
-            per_page: 12,
-            page: `${page}`,
-          },
-        });
-        this.setState(({ images }) => {
-          return {
-            images: [...images, ...response.data.hits],
-          };
+        fetchApi(searchQuery, page).then(response => {
+          this.setState(({ images }) => {
+            return {
+              images: [...images, ...response],
+            };
+          });
         });
       } catch (error) {
         this.setState({ error });
