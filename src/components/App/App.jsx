@@ -1,13 +1,15 @@
 import axios from 'axios';
 import { Component } from 'react';
+import { fetchApi } from '../../services/api';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { Searchbar } from 'components/Searchbar/Searchbar';
-import { Container } from './App.styled';
 import { Loader } from 'components/Loader/Loader';
 import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
-import { ToastContainer, toast } from 'react-toastify';
 
+import { Container } from './App.styled';
+
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const BASE_URL = 'https://pixabay.com/api/';
@@ -19,17 +21,22 @@ export class App extends Component {
     selectedImg: '',
     searchQuery: '',
     page: 1,
+    isLoading: false,
     error: null,
     showModal: false,
-    status: 'idle',
   };
 
   async componentDidUpdate(_, prevState) {
     const { searchQuery, page } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
+      fetchApi();
+      console.log(
+        'fetchApi(): ',
+        fetchApi().then(resp => resp)
+      );
       try {
-        this.setState({ status: 'pending', images: [] });
+        this.setState({ isLoading: true, images: [] });
 
         const response = await axios.get(BASE_URL, {
           params: {
@@ -37,33 +44,32 @@ export class App extends Component {
             q: `${searchQuery}`,
             image_type: 'photo',
             orientation: 'horizontal',
-            safesearch: true,
             per_page: 12,
             page: 1,
           },
         });
 
         if (response.data.hits.length === 0) {
-          this.setState({ status: 'rejected' });
-
           return toast.error('No such value, please enter something valid', {
-            autoClose: 4000,
+            autoClose: 2000,
           });
         }
 
         this.setState({
           images: response.data.hits,
           page: 1,
-          status: 'idle',
+          isLoading: false,
         });
       } catch (error) {
-        this.setState({ error, status: 'eror' });
+        this.setState({ error });
+      } finally {
+        this.setState({ isLoading: false });
       }
     }
 
     if (prevState.page !== page && page !== 1) {
       try {
-        this.setState({ status: 'pending' });
+        this.setState({ isLoading: true });
 
         const response = await axios.get(BASE_URL, {
           params: {
@@ -78,12 +84,13 @@ export class App extends Component {
         });
         this.setState(({ images }) => {
           return {
-            status: 'idle',
             images: [...images, ...response.data.hits],
           };
         });
       } catch (error) {
-        this.setState({ error, status: 'eror' });
+        this.setState({ error });
+      } finally {
+        this.setState({ isLoading: false });
       }
     }
   }
@@ -111,21 +118,21 @@ export class App extends Component {
   };
 
   render() {
-    const { images, showModal, selectedImg, error, status } = this.state;
+    const { images, showModal, selectedImg, error, isLoading } = this.state;
     return (
       <Container>
         <ToastContainer />
         <Searchbar onSearch={this.handleSearch} />
-        {status === 'idle' && (
-          <ImageGallery
-            images={images}
-            onClick={this.toggleModal}
-            imgId={this.imgId}
-          />
-        )}
-        {status === 'pending' && <Loader />}
-        {status === 'eror' && <h1>{error.message}</h1>}
-        {status === 'rejected' && <h1>Invalid value!</h1>}
+        {isLoading && <Loader />}
+
+        <ImageGallery
+          images={images}
+          onClick={this.toggleModal}
+          imgId={this.imgId}
+        />
+
+        {/* {error && <h1>Invalid value!</h1>} */}
+        {/* {status === 'rejected' && <h1>Invalid value!</h1>} */}
 
         {images.length > 0 && <Button loadMore={this.loadMoreImages} />}
         {showModal && (
