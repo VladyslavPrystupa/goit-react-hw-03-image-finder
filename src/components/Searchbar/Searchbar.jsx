@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { toast } from 'react-toastify';
 
 export class Searchbar extends Component {
   state = {
@@ -12,8 +13,14 @@ export class Searchbar extends Component {
 
   handleSubmit = evt => {
     evt.preventDefault();
-    const value = this.state.searcValue;
-    this.props.onSearch(value);
+    const { searcValue } = this.state;
+
+    if (searcValue.trim() === '') {
+      return toast.error('enter value!', { autoClose: 3000 });
+    }
+
+    this.props.onSearch(searcValue);
+
     this.reset();
   };
 

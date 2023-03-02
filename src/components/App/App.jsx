@@ -6,6 +6,9 @@ import { Container } from './App.styled';
 import { Loader } from 'components/Loader/Loader';
 import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
+import { ToastContainer, toast } from 'react-toastify';
+
+import 'react-toastify/dist/ReactToastify.css';
 
 const BASE_URL = 'https://pixabay.com/api/';
 const KEY = '32943531-cb871ea456f4d19bb7942720c';
@@ -13,12 +16,12 @@ const KEY = '32943531-cb871ea456f4d19bb7942720c';
 export class App extends Component {
   state = {
     images: [],
+    selectedImg: '',
     searchQuery: '',
     page: 1,
-    isLoading: false,
     error: null,
     showModal: false,
-    selectedImg: '',
+    status: 'idle',
   };
 
   async componentDidUpdate(_, prevState) {
@@ -26,7 +29,8 @@ export class App extends Component {
 
     if (prevState.searchQuery !== searchQuery) {
       try {
-        this.setState({ isLoading: true });
+        this.setState({ status: 'pending', images: [] });
+
         const response = await axios.get(BASE_URL, {
           params: {
             key: KEY,
@@ -38,21 +42,29 @@ export class App extends Component {
             page: 1,
           },
         });
+
+        if (response.data.hits.length === 0) {
+          this.setState({ status: 'rejected' });
+
+          return toast.error('No such value, please enter something valid', {
+            autoClose: 4000,
+          });
+        }
+
         this.setState({
           images: response.data.hits,
           page: 1,
-          isLoading: false,
+          status: 'idle',
         });
       } catch (error) {
-        this.setState({ error });
-      } finally {
-        this.setState({ isLoading: false });
+        this.setState({ error, status: 'eror' });
       }
     }
 
     if (prevState.page !== page && page !== 1) {
       try {
-        this.setState({ isLoading: true });
+        this.setState({ status: 'pending' });
+
         const response = await axios.get(BASE_URL, {
           params: {
             key: KEY,
@@ -64,17 +76,14 @@ export class App extends Component {
             page: `${page}`,
           },
         });
-
         this.setState(({ images }) => {
           return {
+            status: 'idle',
             images: [...images, ...response.data.hits],
-            isLoading: false,
           };
         });
       } catch (error) {
-        this.setState({ error });
-      } finally {
-        this.setState({ isLoading: false });
+        this.setState({ error, status: 'eror' });
       }
     }
   }
@@ -102,20 +111,26 @@ export class App extends Component {
   };
 
   render() {
-    const { images, isLoading, showModal, selectedImg } = this.state;
+    const { images, showModal, selectedImg, error, status } = this.state;
     return (
       <Container>
+        <ToastContainer />
         <Searchbar onSearch={this.handleSearch} />
-        {isLoading && <Loader />}
-        <ImageGallery
-          images={images}
-          onClick={this.toggleModal}
-          imgId={this.imgId}
-        />
+        {status === 'idle' && (
+          <ImageGallery
+            images={images}
+            onClick={this.toggleModal}
+            imgId={this.imgId}
+          />
+        )}
+        {status === 'pending' && <Loader />}
+        {status === 'eror' && <h1>{error.message}</h1>}
+        {status === 'rejected' && <h1>Invalid value!</h1>}
+
         {images.length > 0 && <Button loadMore={this.loadMoreImages} />}
         {showModal && (
           <Modal onClose={this.toggleModal}>
-            <img src={selectedImg} alt="#" />
+            <img src={selectedImg} alt="" />
           </Modal>
         )}
       </Container>
