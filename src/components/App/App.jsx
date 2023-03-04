@@ -5,8 +5,7 @@ import { Searchbar } from 'components/Searchbar/Searchbar';
 import { Loader } from 'components/Loader/Loader';
 import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
-
-import { Container } from './App.styled';
+import { Error } from 'components/Error/Error';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -20,6 +19,7 @@ export class App extends Component {
     isLoading: false,
     error: null,
     showModal: false,
+    staus: 'idle',
   };
 
   componentDidUpdate(_, prevState) {
@@ -27,42 +27,44 @@ export class App extends Component {
 
     if (prevState.searchQuery !== searchQuery) {
       try {
-        this.setState({ isLoading: true, images: [] });
+        this.setState({ status: 'pending', images: [] });
 
         fetchApi(searchQuery).then(response => {
-          if (response.length === 0) {
+          if (response.hits.length === 0) {
+            this.setState({
+              status: 'rejected',
+              images: [],
+            });
             return toast.error('No such value, please enter something valid', {
               autoClose: 2000,
             });
           }
 
           this.setState({
-            images: response,
+            images: response.hits,
             page: 1,
+            status: 'resolved',
           });
         });
       } catch (error) {
-        this.setState({ error });
-      } finally {
-        this.setState({ isLoading: false });
+        this.setState({ error, status: 'error' });
       }
     }
 
     if (prevState.page !== page && page !== 1) {
       try {
-        this.setState({ isLoading: true });
+        this.setState({ status: 'pending' });
 
         fetchApi(searchQuery, page).then(response => {
           this.setState(({ images }) => {
             return {
-              images: [...images, ...response],
+              images: [...images, ...response.hits],
+              status: 'resolved',
             };
           });
         });
       } catch (error) {
-        this.setState({ error });
-      } finally {
-        this.setState({ isLoading: false });
+        this.setState({ error, status: 'error' });
       }
     }
   }
@@ -90,21 +92,19 @@ export class App extends Component {
   };
 
   render() {
-    const { images, showModal, selectedImg, error, isLoading } = this.state;
+    const { images, showModal, selectedImg, error, status } = this.state;
     return (
-      <Container>
+      <>
         <ToastContainer />
         <Searchbar onSearch={this.handleSearch} />
-        {isLoading && <Loader />}
 
         <ImageGallery
           images={images}
           onClick={this.toggleModal}
           imgId={this.imgId}
         />
-
-        {/* {error && <h1>Invalid value!</h1>} */}
-        {/* {status === 'rejected' && <h1>Invalid value!</h1>} */}
+        {status === 'pending' && <Loader />}
+        {status === 'error' && <Error error={error.message} />}
 
         {images.length > 0 && <Button loadMore={this.loadMoreImages} />}
         {showModal && (
@@ -112,7 +112,7 @@ export class App extends Component {
             <img src={selectedImg} alt="" />
           </Modal>
         )}
-      </Container>
+      </>
     );
   }
 }

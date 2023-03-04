@@ -15,5 +15,6 @@ export const fetchApi = async (searchQuery, page = 1) => {
       page: `${page}`,
     },
   });
-  return response.data.hits;
+
+  return response.data;
 };
