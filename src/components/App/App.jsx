@@ -26,8 +26,9 @@ export class App extends Component {
 
     if (prevState.searchQuery !== searchQuery) {
       try {
-        const response = await fetchApi(searchQuery);
         this.setState({ status: 'pending' });
+
+        const response = await fetchApi(searchQuery);
 
         if (response.hits.length === 0) {
           this.setState({
@@ -54,6 +55,7 @@ export class App extends Component {
         this.setState({ status: 'pending' });
 
         const response = await fetchApi(searchQuery, page);
+
         this.setState(({ images }) => {
           return {
             images: [...images, ...response.hits],
@@ -102,9 +104,9 @@ export class App extends Component {
           onClick={this.toggleModal}
           imgId={this.imgId}
         />
+
         {status === 'pending' && <Loader />}
         {status === 'error' && <Error error={error.message} />}
-
         {images.length > 0 && <Button loadMore={this.loadMoreImages} />}
         {showModal && (
           <Modal onClose={this.toggleModal}>
