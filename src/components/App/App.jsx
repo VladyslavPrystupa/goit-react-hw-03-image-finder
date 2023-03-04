@@ -22,7 +22,7 @@ export class App extends Component {
     showModal: false,
   };
 
-  async componentDidUpdate(_, prevState) {
+  componentDidUpdate(_, prevState) {
     const { searchQuery, page } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
