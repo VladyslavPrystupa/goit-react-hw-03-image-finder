@@ -18,7 +18,7 @@ export class App extends Component {
     page: 1,
     error: null,
     showModal: false,
-    staus: 'idle',
+    status: 'idle',
   };
 
   async componentDidUpdate(_, prevState) {
@@ -26,9 +26,8 @@ export class App extends Component {
 
     if (prevState.searchQuery !== searchQuery) {
       try {
-        this.setState({ status: 'pending' });
-
         const response = await fetchApi(searchQuery);
+        this.setState({ status: 'pending' });
 
         if (response.hits.length === 0) {
           this.setState({
