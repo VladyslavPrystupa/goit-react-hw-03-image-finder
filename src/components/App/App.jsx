@@ -16,7 +16,6 @@ export class App extends Component {
     selectedImg: '',
     searchQuery: '',
     page: 1,
-    isLoading: false,
     error: null,
     showModal: false,
     staus: 'idle',
@@ -27,7 +26,7 @@ export class App extends Component {
 
     if (prevState.searchQuery !== searchQuery) {
       try {
-        this.setState({ status: 'pending', images: [] });
+        this.setState({ status: 'pending' });
 
         fetchApi(searchQuery).then(response => {
           if (response.hits.length === 0) {
@@ -92,7 +91,9 @@ export class App extends Component {
   };
 
   render() {
-    const { images, showModal, selectedImg, error, status } = this.state;
+    const { images, showModal, selectedImg, error, status, showBtn } =
+      this.state;
+
     return (
       <>
         <ToastContainer />
