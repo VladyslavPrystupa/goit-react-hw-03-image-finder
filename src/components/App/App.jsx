@@ -91,8 +91,7 @@ export class App extends Component {
   };
 
   render() {
-    const { images, showModal, selectedImg, error, status, showBtn } =
-      this.state;
+    const { images, showModal, selectedImg, error, status } = this.state;
 
     return (
       <>
