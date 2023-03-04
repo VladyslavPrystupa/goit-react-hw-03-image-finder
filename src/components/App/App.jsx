@@ -32,7 +32,6 @@ export class App extends Component {
 
         if (response.hits.length === 0) {
           this.setState({
-            status: 'rejected',
             images: [],
           });
           return toast.error('No such value, please enter something valid', {
@@ -43,10 +42,11 @@ export class App extends Component {
         this.setState({
           images: response.hits,
           page: 1,
-          status: 'resolved',
         });
       } catch (error) {
         this.setState({ error, status: 'error' });
+      } finally {
+        this.setState({ status: 'idle' });
       }
     }
 
@@ -58,11 +58,12 @@ export class App extends Component {
         this.setState(({ images }) => {
           return {
             images: [...images, ...response.hits],
-            status: 'resolved',
           };
         });
       } catch (error) {
         this.setState({ error, status: 'error' });
+      } finally {
+        this.setState({ status: 'idle' });
       }
     }
   }
