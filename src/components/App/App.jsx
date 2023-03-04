@@ -21,29 +21,29 @@ export class App extends Component {
     staus: 'idle',
   };
 
-  componentDidUpdate(_, prevState) {
+  async componentDidUpdate(_, prevState) {
     const { searchQuery, page } = this.state;
 
     if (prevState.searchQuery !== searchQuery) {
       try {
         this.setState({ status: 'pending' });
 
-        fetchApi(searchQuery).then(response => {
-          if (response.hits.length === 0) {
-            this.setState({
-              status: 'rejected',
-              images: [],
-            });
-            return toast.error('No such value, please enter something valid', {
-              autoClose: 2000,
-            });
-          }
+        const response = await fetchApi(searchQuery);
 
+        if (response.hits.length === 0) {
           this.setState({
-            images: response.hits,
-            page: 1,
-            status: 'resolved',
+            status: 'rejected',
+            images: [],
           });
+          return toast.error('No such value, please enter something valid', {
+            autoClose: 2000,
+          });
+        }
+
+        this.setState({
+          images: response.hits,
+          page: 1,
+          status: 'resolved',
         });
       } catch (error) {
         this.setState({ error, status: 'error' });
@@ -54,13 +54,12 @@ export class App extends Component {
       try {
         this.setState({ status: 'pending' });
 
-        fetchApi(searchQuery, page).then(response => {
-          this.setState(({ images }) => {
-            return {
-              images: [...images, ...response.hits],
-              status: 'resolved',
-            };
-          });
+        const response = await fetchApi(searchQuery, page);
+        this.setState(({ images }) => {
+          return {
+            images: [...images, ...response.hits],
+            status: 'resolved',
+          };
         });
       } catch (error) {
         this.setState({ error, status: 'error' });
